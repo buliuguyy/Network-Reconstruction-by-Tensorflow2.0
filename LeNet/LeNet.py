@@ -1,6 +1,6 @@
 import tensorflow as tf
+import numpy as np
 import d2l_tensorflow  as d2l
-
 
 def net():
     return tf.keras.models.Sequential([
@@ -48,14 +48,23 @@ class TrainCallback(tf.keras.callbacks.Callback):  # @save
             print(f'{num_examples / self.timer.avg():.1f} examples/sec on '
                   f'{str(self.device_name)}')
 
+# 参数初始化
+batch_size, lr, num_epochs = 256, 0.9, 10
+resize = None
 
+# 下载Fashion-MNIST数据集并将其载入内存
+mnist_train, mnist_test = tf.keras.datasets.fashion_mnist.load_data()
+# 对图片数据进行归一化，并且将输入数据进行升维(在最后加上一个batch_size的维度)，最后将label映射为int32类型
+process = lambda X, y: (tf.expand_dims(X, axis=3) / 255, tf.cast(y, dtype='int32'))
+# 对图片进行resize，如果必要的话
+resize_fn = lambda X, y: (tf.image.resize_with_pad(X, resize, resize) if resize else X, y)
+# 将ndarray数据转为tensor，打乱重排并按batch_size大小得到训练集与测试集的迭代器
+train_iter = tf.data.Dataset.from_tensor_slices(process(*mnist_train)).batch(batch_size).shuffle(
+    len(mnist_train[0])).map(resize_fn)
+test_iter = tf.data.Dataset.from_tensor_slices(process(*mnist_test)).batch(batch_size).map(resize_fn)
 
-batch_size = 256
-train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size=batch_size)
-
-lr, num_epochs = 0.9, 10
-
-device_name = d2l.try_gpu()._device_name
+# 训练过程
+device_name = d2l.try_gpu()._device_name  # 获取训练设备
 strategy = tf.distribute.OneDeviceStrategy(device_name)
 with strategy.scope():
     optimizer = tf.keras.optimizers.SGD(learning_rate=lr)
@@ -64,3 +73,5 @@ with strategy.scope():
     model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
     callback = TrainCallback(model, train_iter, test_iter, num_epochs, device_name)
 model.fit(train_iter, epochs=num_epochs, verbose=0, callbacks=[callback])
+
+
