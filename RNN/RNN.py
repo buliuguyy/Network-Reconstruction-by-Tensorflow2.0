@@ -22,7 +22,7 @@ print(Y.shape, len(state_new), state_new[0].shape)
 # 封装RNN模块成一个keras的Layer
 class My_RNN_Layer(tf.keras.layers.Layer):
     def __init__(self, rnn_layer, vocab_size):
-        super(RNNModel, self).__init__()
+        super(My_RNN_Layer, self).__init__()
         self.rnn = rnn_layer
         self.vocab_size = vocab_size
         self.dense = tf.keras.layers.Dense(vocab_size)  # 输出层
@@ -47,7 +47,6 @@ d2l.predict_ch8('time traveller', 10, net, vocab)
 # 具体的网络训练
 num_epochs, lr = 500, 1
 d2l.train_ch8(net, train_iter, vocab, lr, num_epochs, strategy)
-
 
 
 
