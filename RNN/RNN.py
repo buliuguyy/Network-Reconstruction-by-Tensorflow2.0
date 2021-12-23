@@ -41,7 +41,7 @@ class My_RNN_Layer(tf.keras.layers.Layer):
 device_name = d2l.try_gpu()._device_name
 strategy = tf.distribute.OneDeviceStrategy(device_name)
 with strategy.scope():
-    net = RNNModel(rnn_layer, vocab_size=len(vocab))
+    net = My_RNN_Layer(rnn_layer, vocab_size=len(vocab))
 # 先对未训练网络进行一次预测
 d2l.predict_ch8('time traveller', 10, net, vocab)
 # 具体的网络训练
